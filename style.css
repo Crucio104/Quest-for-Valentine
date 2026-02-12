@@ -1,0 +1,545 @@
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #000;
+    color: white;
+    font-family: 'Press Start 2P', cursive;
+    height: 100vh;
+    overflow: hidden;
+}
+
+#game-container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    background-color: #000;
+    image-rendering: pixelated;
+    display: flex;
+    flex-direction: column;
+}
+
+.crt-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: none;
+    pointer-events: none;
+    z-index: 100;
+}
+
+#scene-image {
+    flex: 1;
+    width: 100%;
+    background-color: #333;
+    background-size: cover;
+    background-position: center;
+    transition: opacity 0.5s ease-in-out;
+    opacity: 1;
+}
+
+.fade-out {
+    opacity: 0 !important;
+}
+
+#scene-image.scene-proposal {
+    background-image: url('assets/Forest_lake.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-color: #000;
+}
+
+#dialogue-box {
+    position: absolute;
+    bottom: 50px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 85%;
+    max-width: 950px;
+    width: 90%;
+    max-width: 1200px;
+    height: auto;
+    min-height: 220px;
+    padding: 40px;
+    box-sizing: border-box;
+
+    background: rgba(10, 5, 20, 0.7);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+
+    box-shadow:
+        0 10px 30px rgba(0, 0, 0, 0.5),
+        inset 0 0 50px rgba(0, 0, 0, 0.5),
+        0 0 15px rgba(186, 85, 211, 0.3);
+
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    text-align: center;
+    z-index: 20;
+
+    transition: transform 0.3s ease, opacity 0.5s ease;
+
+    width: fit-content;
+    min-width: 300px;
+    max-width: 90%;
+
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+#dialogue-box.dialogue-hidden {
+    opacity: 0;
+    transform: translateX(-50%) translateY(20px);
+    pointer-events: none;
+}
+
+#dialogue-text {
+    font-size: 20px;
+    line-height: 1.8;
+    margin-bottom: 30px;
+    white-space: pre-wrap;
+    max-width: 100%;
+    color: #fff;
+    text-shadow: 2px 2px 0 #000;
+    position: relative;
+    z-index: 5;
+    letter-spacing: 1px;
+}
+
+#choices-container {
+    display: flex;
+    gap: 25px;
+    justify-content: center;
+    flex-wrap: wrap;
+    z-index: 5;
+    padding-top: 15px;
+}
+
+.choice-btn {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    border-radius: 4px;
+    padding: 15px 35px;
+    font-family: 'Press Start 2P', cursive;
+    cursor: pointer;
+    font-size: 14px;
+    text-transform: uppercase;
+    transition: all 0.2s;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    text-shadow: 1px 1px 0 #000;
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(2px);
+}
+
+.choice-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
+}
+
+.choice-btn:active {
+    transform: translateY(2px);
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.runaway-btn {
+    position: absolute;
+    transition: top 0.2s, left 0.2s;
+    z-index: 50;
+}
+
+#modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 200;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s, visibility 0.3s;
+}
+
+#modal-overlay.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+#modal-box {
+    background-color: #fff;
+    color: #000;
+    padding: 30px;
+    border: 4px solid #000;
+    box-shadow: 10px 10px 0px #ff69b4;
+    text-align: center;
+    max-width: 80%;
+    font-family: 'Press Start 2P', cursive;
+    transform: scale(0.8);
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+#modal-overlay.show #modal-box {
+    transform: scale(1);
+}
+
+#modal-text {
+    margin-bottom: 20px;
+    line-height: 1.5;
+}
+
+#modal-close-btn {
+    background-color: #000;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    font-family: 'Press Start 2P', cursive;
+    cursor: pointer;
+    text-transform: uppercase;
+}
+
+#modal-close-btn:hover {
+    background-color: #ff69b4;
+    color: #000;
+}
+
+#title-screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #000;
+    background-image: url('assets/Start.gif');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    image-rendering: pixelated;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    padding-top: 15vh;
+    box-sizing: border-box;
+    z-index: 50;
+    transition: opacity 0.5s;
+    overflow: hidden;
+}
+
+#title-screen.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.pixel-title {
+    font-size: 48px;
+    text-align: center;
+    color: #fff0f5;
+    text-shadow:
+        4px 4px 0 #000,
+        -2px -2px 0 #000,
+        2px -2px 0 #000,
+        -2px 2px 0 #000,
+        2px 2px 0 #000;
+    margin-bottom: 20px;
+    line-height: 1.5;
+    animation: pulse 2s infinite;
+    z-index: 2;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+.particle {
+    position: absolute;
+    font-size: 14px;
+    pointer-events: none;
+    z-index: 1;
+    animation: twinkle 6s linear forwards;
+    text-shadow: 1px 1px 0 #000;
+    opacity: 0;
+}
+
+@keyframes twinkle {
+    0% {
+        transform: translateY(0) scale(0.8);
+        opacity: 0;
+    }
+
+    20% {
+        opacity: 0.6;
+    }
+
+    80% {
+        opacity: 0.6;
+    }
+
+    100% {
+        transform: translateY(-50px) scale(1.2);
+        opacity: 0;
+    }
+}
+
+.pixel-heart-gif {
+    width: 100px;
+    height: auto;
+    margin-bottom: 40px;
+    image-rendering: pixelated;
+    z-index: 2;
+}
+
+.blinking-text {
+    position: absolute;
+    bottom: 50px;
+    font-size: 18px;
+    color: #fff;
+    text-transform: uppercase;
+    animation: blink 3s infinite ease-in-out;
+    text-shadow: 2px 2px #000;
+    z-index: 2;
+}
+
+@keyframes blink {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0;
+    }
+}
+
+#scene-image.scene-start {
+    background: linear-gradient(to bottom, #ff9a9e, #fecfef);
+}
+
+#scene-image.scene-forest {
+    background-image: url('assets/Forest_night.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-color: #000;
+}
+
+#scene-image.scene-sign {
+    background-image: url('assets/Forest_sign.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-color: #000;
+}
+
+#scene-image.scene-riddle {
+    background-image: url('assets/Forest_gate.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-color: #000;
+}
+
+#scene-image.scene-sky {
+    background-image: url('assets/Night_sky.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-color: #000;
+}
+
+#scene-image.scene-success {
+    background-image: url('assets/Final.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-color: #000;
+}
+
+#scene-image.scene-deep-woods,
+#scene-image.scene-lost {
+    background-image: url('assets/Forest_night.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-color: #000;
+}
+
+#scene-image.scene-bear,
+#scene-image.scene-bear-end {
+    background-image: url('assets/Forest_bear.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-color: #000;
+}
+
+#scene-image.scene-cliff {
+    background-image: url('assets/Cliff.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-color: #000;
+}
+
+#scene-image.scene-cliff-fall {
+    background-image: url('assets/Cliff.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-color: #000;
+}
+
+#scene-image.scene-wait {
+    background-image: url('assets/Forest_night.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-color: #000;
+}
+
+#scene-image.scene-river {
+    background-image: url('assets/Forest_river.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-color: #000;
+}
+
+#scene-image.scene-cave {
+    background-image: url('assets/Forest_night.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-color: #000;
+}
+
+#scene-image.scene-frozen {
+    background-image: url('assets/Forest_frozen.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-color: #aaddff;
+}
+
+#scene-image.scene-raft {
+    background-image: url('assets/Forest_raft.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-color: #000;
+}
+
+#scene-image.scene-bear-riding {
+    background-image: url('assets/Forest_bear_riding.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-color: #000;
+}
+
+#scene-image.scene-squirrel {
+    background-image: url('assets/Forest_squirrel.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-color: #000;
+}
+
+#scene-image.scene-acorn {
+    background-image: url('assets/Forest_acorn.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-color: #000;
+}
+
+#scene-image.scene-cliff-fall {
+    background-image: url('assets/Cliff_falling.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-color: #000;
+}
+
+#scene-image.scene-cave {
+    background-image: url('assets/Cliff_cave.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-color: #000;
+}
+
+#scene-image.scene-cave-treasure {
+    background-image: url('assets/Cliff_chocolate.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-color: #000;
+}
+
+#scene-image.scene-cave-bats {
+    background-image: url('assets/Cliff_bats.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-color: #000;
+}
+
+#game-over-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 80px;
+    color: #fff;
+    text-shadow: 4px 4px 0 #000;
+    z-index: 60;
+    pointer-events: none;
+    text-align: center;
+    font-family: 'Press Start 2P', cursive;
+    white-space: nowrap;
+
+    animation: appear-float 3s ease-out forwards;
+}
+
+@keyframes appear-float {
+    0% {
+        transform: translate(-50%, -40%);
+        opacity: 0;
+    }
+
+    100% {
+        transform: translate(-50%, -50%);
+        opacity: 1;
+    }
+}
+
+#game-over-text.hidden {
+    display: none;
+    opacity: 0;
+    animation: none;
+}

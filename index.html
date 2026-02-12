@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixel Valentine Adventure</title>
+    <link rel="icon" type="image/gif" href="assets/pixel-heart.gif">
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="crt-overlay"></div>
+    <div id="game-container">
+        <div id="scene-image"></div>
+        <div id="dialogue-box">
+            <p id="dialogue-text"></p>
+            <div id="choices-container"></div>
+        </div>
+    </div>
+
+    <div id="modal-overlay">
+        <div id="modal-box">
+            <p id="modal-text">Message goes here</p>
+            <button id="modal-close-btn">OK</button>
+        </div>
+    </div>
+
+    <div id="title-screen">
+        <h1 class="pixel-title">Quest for<br>Valentine</h1>
+        <p id="start-text" class="blinking-text">Press on the screen to continue</p>
+    </div>
+
+    <div id="game-over-text" class="hidden">GAME OVER</div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
