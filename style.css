@@ -55,13 +55,12 @@ body {
     position: absolute;
     bottom: 50px;
     left: 50%;
-    transform: translateX(-50%);
-    width: 85%;
-    max-width: 950px;
-    width: 90%;
-    max-width: 1200px;
+
+    width: fit-content;
+    min-width: 300px;
+    max-width: 95vw;
+
     height: auto;
-    min-height: 220px;
     padding: 40px;
     box-sizing: border-box;
 
@@ -86,10 +85,6 @@ body {
 
     transition: transform 0.3s ease, opacity 0.5s ease;
 
-    width: fit-content;
-    min-width: 300px;
-    max-width: 90%;
-
     opacity: 1;
     transform: translateX(-50%) translateY(0);
 }
@@ -101,9 +96,9 @@ body {
 }
 
 #dialogue-text {
-    font-size: 20px;
+    font-size: 16px;
     line-height: 1.8;
-    margin-bottom: 30px;
+    margin-bottom: 10px;
     white-space: pre-wrap;
     max-width: 100%;
     color: #fff;
@@ -119,7 +114,7 @@ body {
     justify-content: center;
     flex-wrap: wrap;
     z-index: 5;
-    padding-top: 15px;
+    padding-top: 5px;
 }
 
 .choice-btn {
@@ -127,10 +122,10 @@ body {
     color: #fff;
     border: 2px solid rgba(255, 255, 255, 0.5);
     border-radius: 4px;
-    padding: 15px 35px;
+    padding: 12px 25px;
     font-family: 'Press Start 2P', cursive;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 12px;
     text-transform: uppercase;
     transition: all 0.2s;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
