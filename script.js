@@ -7,18 +7,266 @@ const titleScreen = document.getElementById('title-screen');
 const startBtn = document.getElementById('start-btn');
 const dialogueBox = document.getElementById('dialogue-box');
 
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+if (audioCtx.state === 'suspended') {
+    document.addEventListener('click', () => {
+        audioCtx.resume();
+    }, { once: true });
+}
+
+function playBeep(frequency = 440, duration = 0.05, type = 'square') {
+    if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+    const oscillator = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+
+    oscillator.type = type;
+    oscillator.frequency.value = frequency;
+
+    gainNode.gain.setValueAtTime(0.05, audioCtx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+
+    oscillator.start();
+    oscillator.stop(audioCtx.currentTime + duration);
+}
+
+function playClickSound() {
+    playBeep(600, 0.1, 'sine');
+}
+
+function playTypeSound() {
+    const freq = 300 + Math.random() * 100;
+    playBeep(freq, 0.03, 'triangle');
+}
+
 if (titleScreen) {
     titleScreen.onclick = () => {
+        const achievementsModal = document.getElementById('achievements-modal');
+        const settingsModal = document.getElementById('settings-modal');
+
+        if ((achievementsModal && !achievementsModal.classList.contains('hidden')) ||
+            (settingsModal && !settingsModal.classList.contains('hidden'))) {
+            return;
+        }
+
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
         if (currentSceneId === 'start') {
             showScene('forest');
         }
     };
+
+    document.addEventListener('keydown', (e) => {
+        if ((e.key === ' ' || e.key === 'Enter') && currentSceneId === 'start') {
+            const achievementsModal = document.getElementById('achievements-modal');
+            const settingsModal = document.getElementById('settings-modal');
+
+            if ((achievementsModal && !achievementsModal.classList.contains('hidden')) ||
+                (settingsModal && !settingsModal.classList.contains('hidden'))) {
+                return;
+            }
+
+            if (typeof controlPanelFocusIndex !== 'undefined' && controlPanelFocusIndex >= 0) {
+                return;
+            }
+
+            e.preventDefault();
+            titleScreen.onclick();
+        }
+    });
+
     startParticleGenerator();
 }
 
+let musicInterval;
+let musicVolume = 0.08;
+let currentMusicType = 'default';
+
+const musicThemes = {
+    default: [392.00, 329.63, 261.63, 196.00, 261.63, 329.63, 392.00, 523.25, 493.88, 392.00, 246.94, 196.00, 246.94, 392.00, 493.88, 587.33],
+    danger: [329.63, 293.66, 261.63, 246.94, 261.63, 293.66, 329.63, 349.23, 329.63, 293.66, 277.18, 261.63, 246.94, 261.63, 293.66, 329.63],
+    romantic: [523.25, 587.33, 659.25, 698.46, 783.99, 698.46, 659.25, 587.33, 523.25, 493.88, 440.00, 493.88],
+    mysterious: [293.66, 329.63, 349.23, 293.66, 261.63, 293.66, 329.63, 261.63, 246.94, 220.00, 246.94, 293.66]
+};
+
+function playMusic(type = 'default') {
+    if (musicInterval && currentMusicType === type) return;
+
+    if (musicInterval) {
+        stopMusic();
+        setTimeout(() => startMusicTheme(type), 1000);
+    } else {
+        startMusicTheme(type);
+    }
+}
+
+function startMusicTheme(type) {
+    currentMusicType = type;
+    musicVolume = (typeof masterVolume !== 'undefined' ? masterVolume : 0.8) * 0.08;
+
+    const notes = musicThemes[type] || musicThemes.default;
+    let noteIndex = 0;
+
+    musicInterval = setInterval(() => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+
+        osc.type = type === 'romantic' ? 'sine' : 'triangle';
+        osc.frequency.value = notes[noteIndex];
+
+        gain.gain.setValueAtTime(musicVolume, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.4);
+
+        noteIndex = (noteIndex + 1) % notes.length;
+    }, type === 'danger' ? 300 : type === 'romantic' ? 500 : 400);
+}
+
+function stopMusic() {
+    if (!musicInterval) return;
+
+    const fadeSteps = 20;
+    const fadeInterval = 50;
+    let currentStep = 0;
+
+    const fadeOut = setInterval(() => {
+        currentStep++;
+        musicVolume = 0.08 * (1 - currentStep / fadeSteps);
+
+        if (currentStep >= fadeSteps) {
+            clearInterval(fadeOut);
+            clearInterval(musicInterval);
+            musicInterval = null;
+            musicVolume = 0.08;
+        }
+    }, fadeInterval);
+}
+
+let ambienceSource = null;
+let ambienceGain = null;
+let currentAmbienceType = null;
+let randomSoundTimeout = null;
+
+function playAmbience(type) {
+    if (currentAmbienceType === type) return;
+    stopAmbience();
+    currentAmbienceType = type;
+
+    if (!type || type === 'none') return;
+
+    if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+
+    const bufferSize = audioCtx.sampleRate * 2; // 2 seconds buffer
+    const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+    const data = buffer.getChannelData(0);
+
+    for (let i = 0; i < bufferSize; i++) {
+        data[i] = Math.random() * 2 - 1;
+    }
+
+    ambienceSource = audioCtx.createBufferSource();
+    ambienceSource.buffer = buffer;
+    ambienceSource.loop = true;
+
+    ambienceGain = audioCtx.createGain();
+
+    // Default base volume
+    ambienceGain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+
+    const filter = audioCtx.createBiquadFilter();
+
+    if (type === 'forest') {
+        // Softer wind (Pink noise approx)
+        filter.type = 'lowpass';
+        filter.frequency.value = 300; // Lower cutoff for softer sound
+        filter.Q.value = 0.5;
+
+        // Gentle modulation
+        const lfo = audioCtx.createOscillator();
+        lfo.type = 'sine';
+        lfo.frequency.value = 0.1; // Very slow cycle
+        const lfoGain = audioCtx.createGain();
+        lfoGain.gain.value = 0.03;
+        lfo.connect(lfoGain);
+        lfoGain.connect(ambienceGain.gain);
+        lfo.start();
+    } else if (type === 'cave') {
+        // Rumble + Reverb simulation
+        filter.type = 'lowpass';
+        filter.frequency.value = 200;
+        filter.Q.value = 3;
+        ambienceGain.gain.value = 0.15;
+    } else if (type === 'water') {
+        // River/Water flow (Refined: Smoother, less static)
+        filter.type = 'lowpass';
+        filter.frequency.value = 600; // Lower cutoff to reduce hiss
+        filter.Q.value = 0.3; // Softer resonance
+
+        const highpass = audioCtx.createBiquadFilter();
+        highpass.type = 'highpass';
+        highpass.frequency.value = 100; // Remove mud
+
+        filter.connect(highpass);
+        highpass.connect(ambienceGain);
+        ambienceSource.connect(filter);
+        ambienceGain.connect(audioCtx.destination);
+        ambienceSource.start();
+        scheduleRandomSound(type);
+        return;
+    }
+
+    ambienceSource.connect(filter);
+    filter.connect(ambienceGain);
+    ambienceGain.connect(audioCtx.destination);
+
+    ambienceSource.start();
+    scheduleRandomSound(type);
+}
+
+function stopAmbience() {
+    if (ambienceSource) {
+        try {
+            ambienceSource.stop();
+            ambienceSource.disconnect();
+        } catch (e) { }
+        ambienceSource = null;
+    }
+    if (ambienceGain) {
+        ambienceGain.disconnect();
+        ambienceGain = null;
+    }
+    if (randomSoundTimeout) {
+        clearTimeout(randomSoundTimeout);
+        randomSoundTimeout = null;
+    }
+    currentAmbienceType = null;
+}
+
+function scheduleRandomSound(type) {
+    // Much more frequent: 2-7 seconds
+    const delay = (Math.random() * 5000) + 2000;
+    randomSoundTimeout = setTimeout(() => {
+        playRandomSound(type);
+        scheduleRandomSound(type);
+    }, delay);
+}
+
 function startParticleGenerator() {
-    const symbols = ['♥', '★', '✦'];
-    const colors = ['#FFC0CB', '#FFB6C1', '#FF69B4', '#FF1493', '#DB7093'];
+    const symbols = ['♥', '★', '✦', '♦', '●'];
+    const colors = ['#FFC0CB', '#FFB6C1', '#FF69B4', '#FF1493', '#DB7093', '#FFE4E1'];
 
     const createParticle = () => {
         if (titleScreen && titleScreen.classList.contains('hidden')) return;
@@ -27,8 +275,9 @@ function startParticleGenerator() {
         particle.classList.add('particle');
 
         particle.innerText = symbols[Math.floor(Math.random() * symbols.length)];
-
         particle.style.color = colors[Math.floor(Math.random() * colors.length)];
+
+        const movementType = Math.floor(Math.random() * 3);
 
         let leftPos;
         if (Math.random() < 0.5) {
@@ -37,14 +286,27 @@ function startParticleGenerator() {
             leftPos = 75 + Math.random() * 25;
         }
         particle.style.left = `${leftPos}%`;
-
         particle.style.top = `${20 + Math.random() * 80}%`;
 
-        const size = 10 + Math.random() * 10;
+        const size = 8 + Math.random() * 16;
         particle.style.fontSize = `${size}px`;
 
-        const duration = 5 + Math.random() * 3;
+        const opacity = 0.3 + Math.random() * 0.7;
+        particle.style.opacity = opacity;
+
+        const duration = 4 + Math.random() * 4;
         particle.style.animationDuration = `${duration}s`;
+
+        if (movementType === 0) {
+            particle.style.animationName = 'float-up';
+        } else if (movementType === 1) {
+            particle.style.animationName = 'float-diagonal';
+        } else {
+            particle.style.animationName = 'float-spiral';
+        }
+
+        const rotation = Math.random() * 360;
+        particle.style.transform = `rotate(${rotation}deg)`;
 
         titleScreen.appendChild(particle);
 
@@ -57,11 +319,11 @@ function startParticleGenerator() {
     const burstInterval = setInterval(() => {
         createParticle();
         burstCount++;
-        if (burstCount >= 60) {
+        if (burstCount >= 150) {
             clearInterval(burstInterval);
             setInterval(createParticle, 100);
         }
-    }, 50);
+    }, 20);
 }
 
 const modalOverlay = document.getElementById('modal-overlay');
@@ -76,11 +338,13 @@ function showModal(message) {
 
 if (modalCloseBtn) {
     modalCloseBtn.onclick = () => {
+        playClickSound();
         modalOverlay.classList.remove('show');
     };
 }
 
 let currentSceneId = 'start';
+let noButtonMoves = 0;
 
 const scenes = {
     start: {
@@ -271,7 +535,7 @@ const scenes = {
         ]
     },
     bearFriend: {
-        text: "The bear is lonely too! You become best friends and ride into the sunset. Best Valentine ever.",
+        text: "The bear is lonely too! You become best friends and ride into the night. Best Valentine ever.",
         imageClass: "scene-bear-riding",
         choices: [
             { text: "Play Again", action: () => showScene('start') }
@@ -284,13 +548,55 @@ const scenes = {
         choices: [
             { text: "Try Again", action: () => showScene('riddle') }
         ]
+    },
+    secretNo: {
+        text: "Why are you trying so hard to say NO? Do you hate happiness? Or are you just testing the developer?",
+        imageClass: "scene-proposal",
+        choices: [
+            { text: "I'm sorry, YES!", action: () => showScene('success') },
+            { text: "I'll never surrender!", action: () => showScene('gameCrash') }
+        ]
+    },
+    gameCrash: {
+        text: "ERROR 404: LOVE NOT FOUND. SYSTEM OVERLOAD. BYE.",
+        imageClass: "scene-start",
+        choices: [
+            { text: "Reboot System", action: () => location.reload() }
+        ],
+        isGameOver: true
     }
 };
 
 let typewriterTimeout;
 
+function resetGame() {
+    stopMusic();
+    stopAmbience();
+    currentSceneId = 'start';
+    noButtonMoves = 0;
+
+    if (titleScreen) titleScreen.classList.remove('hidden');
+    if (dialogueBox) {
+        dialogueBox.style.display = 'none';
+        dialogueBox.classList.add('dialogue-hidden');
+    }
+    if (gameOverText) gameOverText.classList.add('hidden');
+    if (sceneImage) {
+        sceneImage.className = '';
+        sceneImage.classList.remove('fade-out');
+    }
+    if (choicesContainer) {
+        choicesContainer.innerHTML = '';
+        choicesContainer.style.display = 'none';
+    }
+
+    startParticleGenerator();
+}
+
 function showScene(sceneId) {
     if (sceneId === 'start') {
+        stopMusic();
+        stopAmbience();
         if (titleScreen) titleScreen.classList.remove('hidden');
         if (dialogueBox) dialogueBox.style.display = 'none';
         if (gameOverText) gameOverText.classList.add('hidden');
@@ -311,10 +617,22 @@ function showScene(sceneId) {
     if (!scene) return;
 
     currentSceneId = sceneId;
+
+    if (sceneId !== 'proposal' && sceneId !== 'secretNo') {
+        noButtonMoves = 0;
+    }
+
     if (scene.isGameOver) {
         if (gameOverText) gameOverText.classList.remove('hidden');
+        if (typeof unlockEnding === 'function') {
+            unlockEnding(sceneId);
+        }
     } else {
         if (gameOverText) gameOverText.classList.add('hidden');
+    }
+
+    if (sceneId !== 'start' && typeof saveGame === 'function') {
+        saveGame(sceneId);
     }
 
     const existingRunaway = document.getElementById('no-btn');
@@ -322,60 +640,333 @@ function showScene(sceneId) {
         existingRunaway.remove();
     }
 
+    const dangerScenes = ['bearEnd', 'cliffFall', 'cliff', 'caveBat'];
+    const romanticScenes = ['proposal', 'success', 'lake'];
+    const mysteriousScenes = ['cave', 'caveTreasure', 'deepWoods', 'river'];
+
+    if (dangerScenes.includes(sceneId)) {
+        playMusic('danger');
+    } else if (romanticScenes.includes(sceneId)) {
+        playMusic('romantic');
+    } else if (mysteriousScenes.includes(sceneId)) {
+        playMusic('mysterious');
+    } else if (sceneId !== 'start') {
+        playMusic('default');
+    }
+
+    // Ambience Logic
+    if (['cave', 'caveTreasure', 'caveBat'].includes(sceneId)) {
+        playAmbience('cave');
+    } else if (['river', 'lake', 'raft', 'frozen'].includes(sceneId)) {
+        playAmbience('water');
+    } else if (['forest', 'deepWoods', 'bearSniff', 'bearFriend', 'gatePath', 'riddle', 'squirrelFriend', 'wait'].includes(sceneId)) {
+        playAmbience('forest');
+    } else {
+        stopAmbience();
+    }
+
+    // Creature Sounds Logic
+    if (['bearEncounter', 'bearSniff', 'bearEnd', 'bearFriend'].includes(sceneId)) {
+        setTimeout(() => playCreatureSound('bear'), 500);
+    } else if (['wait', 'squirrelFriend'].includes(sceneId)) {
+        setTimeout(() => playCreatureSound('squirrel'), 500);
+    }
+
     sceneImage.classList.add('fade-out');
 
     if (dialogueBox) dialogueBox.classList.add('dialogue-hidden');
 
-    setTimeout(() => {
-        if (typewriterTimeout) clearTimeout(typewriterTimeout);
-
-        sceneImage.className = '';
-        sceneImage.classList.add(scene.imageClass);
-
-        dialogueText.innerHTML = '';
-
+    // Clear previous choices
+    if (choicesContainer) {
         choicesContainer.innerHTML = '';
         choicesContainer.style.display = 'none';
 
-        setTimeout(() => {
+        // Reset navigation state
+        selectedChoiceIndex = 0;
+        controlPanelFocusIndex = -1;
+        keyboardEnabled = false;
+        hasUsedArrowKeys = false;
+        disableKeyboardNav();
+    }
+
+    setTimeout(() => {
+        if (sceneImage) {
+            sceneImage.className = scene.imageClass || '';
             sceneImage.classList.remove('fade-out');
-            if (dialogueBox) dialogueBox.classList.remove('dialogue-hidden');
-        }, 50);
-
-
-        let fullText = scene.text;
-        let isTyping = true;
-        let charIndex = 0;
-
-        const completeTextHandler = () => {
-            if (isTyping) {
-                isTyping = false;
-                if (typewriterTimeout) clearTimeout(typewriterTimeout);
-                dialogueText.innerHTML = fullText;
-                showChoices(scene);
-                gameContainer.onclick = null;
-            }
-        };
-
-        gameContainer.onclick = completeTextHandler;
-
-        function typeWriterStep() {
-            if (!isTyping) return;
-
-            if (charIndex < fullText.length) {
-                dialogueText.innerHTML += fullText.charAt(charIndex);
-                charIndex++;
-                typewriterTimeout = setTimeout(typeWriterStep, 30);
-            } else {
-                isTyping = false;
-                showChoices(scene);
-                gameContainer.onclick = null;
-            }
         }
 
-        setTimeout(typeWriterStep, 300);
+        if (dialogueBox) {
+            dialogueBox.classList.remove('dialogue-hidden');
 
+            // Typewriter effect
+            dialogueText.innerHTML = '';
+
+            // Add cursor element
+            const cursor = document.createElement('span');
+            cursor.className = 'cursor';
+            cursor.innerHTML = '&#9608;'; // Block cursor
+
+            let charIndex = 0;
+            const fullText = scene.text;
+            let isTyping = true;
+
+            // Click to complete text
+            const completeTextHandler = (e) => {
+                // Ignore clicks on control panel
+                if (e.target.closest('#controls-panel') || e.target.closest('.modal')) return;
+
+                if (isTyping) {
+                    isTyping = false;
+                    clearTimeout(typewriterTimeout);
+                    dialogueText.innerHTML = fullText;
+                    cursor.remove(); // Remove cursor when done
+
+                    showChoices(scene);
+                    gameContainer.onclick = null;
+                }
+            };
+
+            gameContainer.onclick = completeTextHandler;
+
+            function typeWriterStep() {
+                if (!isTyping) return;
+
+                if (charIndex < fullText.length) {
+                    dialogueText.innerHTML = fullText.substring(0, charIndex + 1);
+                    dialogueText.appendChild(cursor);
+
+                    playTypeSound();
+
+                    charIndex++;
+                    typewriterTimeout = setTimeout(typeWriterStep, 30);
+                } else {
+                    isTyping = false;
+                    cursor.remove();
+                    showChoices(scene);
+                    gameContainer.onclick = null;
+                }
+            }
+
+            setTimeout(typeWriterStep, 300);
+        }
     }, 500);
+}
+
+function playCreatureSound(type) {
+    if (!audioCtx || audioCtx.state === 'suspended') return;
+
+    if (type === 'bear') {
+        // Bear Growl: Sawtooth with AM
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        const amOsc = audioCtx.createOscillator();
+        const amGain = audioCtx.createGain();
+
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(80, audioCtx.currentTime);
+        osc.frequency.linearRampToValueAtTime(60, audioCtx.currentTime + 1.5);
+
+        // AM for "roughness"
+        amOsc.type = 'sine';
+        amOsc.frequency.value = 15;
+        amGain.gain.value = 0.5;
+
+        amOsc.connect(amGain);
+        amGain.connect(gain.gain);
+
+        gain.gain.setValueAtTime(0, audioCtx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.4, audioCtx.currentTime + 0.5);
+        gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 1.5);
+
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.value = 400;
+
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc.start();
+        amOsc.start();
+        osc.stop(audioCtx.currentTime + 1.5);
+        amOsc.stop(audioCtx.currentTime + 1.5);
+
+    } else if (type === 'squirrel') {
+        // Squirrel Chatter: FM Synthesis
+        const carrier = audioCtx.createOscillator();
+        const modulator = audioCtx.createOscillator();
+        const modGain = audioCtx.createGain();
+        const mainGain = audioCtx.createGain();
+
+        carrier.type = 'triangle';
+        carrier.frequency.value = 2500;
+
+        modulator.type = 'square';
+        modulator.frequency.value = 12;
+
+        modGain.gain.value = 500;
+
+        modulator.connect(modGain);
+        modGain.connect(carrier.frequency);
+
+        carrier.connect(mainGain);
+        mainGain.connect(audioCtx.destination);
+
+        mainGain.gain.setValueAtTime(0, audioCtx.currentTime);
+        mainGain.gain.linearRampToValueAtTime(0.15, audioCtx.currentTime + 0.1);
+        mainGain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.5);
+
+        carrier.start();
+        modulator.start();
+        carrier.stop(audioCtx.currentTime + 0.5);
+        modulator.stop(audioCtx.currentTime + 0.5);
+
+        setTimeout(() => {
+            // Repeat for chatter effect
+            if (Math.random() > 0.3) playCreatureSound('squirrel');
+        }, 150);
+    }
+}
+
+function playRandomSound(type) {
+    if (!audioCtx || audioCtx.state === 'suspended') return;
+
+    if (type === 'forest') {
+        const isOwl = Math.random() > 0.6;
+
+        if (isOwl) {
+            // Owl Hoot (Distant)
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            const filter = audioCtx.createBiquadFilter();
+
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(400, audioCtx.currentTime + 0.2);
+
+            filter.type = 'lowpass';
+            filter.frequency.value = 800; // Distant muffling
+
+            gain.gain.setValueAtTime(0, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.1, audioCtx.currentTime + 0.1);
+            gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
+
+            osc.connect(filter);
+            filter.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.5);
+
+            setTimeout(() => {
+                const osc2 = audioCtx.createOscillator();
+                const gain2 = audioCtx.createGain();
+                const filter2 = audioCtx.createBiquadFilter();
+
+                osc2.type = 'sine';
+                osc2.frequency.setValueAtTime(600, audioCtx.currentTime);
+                osc2.frequency.exponentialRampToValueAtTime(400, audioCtx.currentTime + 0.2);
+
+                filter2.type = 'lowpass';
+                filter2.frequency.value = 800;
+
+                gain2.gain.setValueAtTime(0, audioCtx.currentTime);
+                gain2.gain.linearRampToValueAtTime(0.06, audioCtx.currentTime + 0.1);
+                gain2.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
+
+                osc2.connect(filter2);
+                filter2.connect(gain2);
+                gain2.connect(audioCtx.destination);
+                osc2.start();
+                osc2.stop(audioCtx.currentTime + 0.5);
+            }, 400);
+        } else {
+            // Bird Chirp (Distant)
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            const filter = audioCtx.createBiquadFilter();
+
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(2000, audioCtx.currentTime);
+            osc.frequency.linearRampToValueAtTime(2500, audioCtx.currentTime + 0.1);
+
+            filter.type = 'lowpass';
+            filter.frequency.value = 1500;
+
+            gain.gain.setValueAtTime(0, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.05, audioCtx.currentTime + 0.05);
+            gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.15);
+
+            osc.connect(filter);
+            filter.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.2);
+        }
+
+    } else if (type === 'cave') {
+        // Bat Colony (Burst of chirps)
+        const chirpCount = Math.floor(Math.random() * 3) + 2; // 2-4 bats
+
+        for (let i = 0; i < chirpCount; i++) {
+            setTimeout(() => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sawtooth';
+                const freq = 10000 + (Math.random() * 2000);
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(freq / 2, audioCtx.currentTime + 0.05);
+
+                gain.gain.setValueAtTime(0, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.1, audioCtx.currentTime + 0.01);
+                gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.08);
+
+                const filter = audioCtx.createBiquadFilter();
+                filter.type = 'highpass';
+                filter.frequency.value = 3000;
+
+                osc.connect(filter);
+                filter.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.1);
+            }, i * (50 + Math.random() * 50));
+        }
+
+    } else if (type === 'water') {
+        // Fish Splash 2.0 (Bloop + Splash)
+        const osc = audioCtx.createOscillator();
+        const oscGain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.2);
+        oscGain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+        oscGain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+        osc.connect(oscGain);
+        oscGain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.2);
+
+        const bufferSize = audioCtx.sampleRate * 0.5;
+        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+
+        const noise = audioCtx.createBufferSource();
+        noise.buffer = buffer;
+        const gain = audioCtx.createGain();
+        const filter = audioCtx.createBiquadFilter();
+
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(1000, audioCtx.currentTime);
+
+        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(audioCtx.destination);
+        noise.start();
+    }
 }
 
 function showChoices(scene) {
@@ -389,20 +980,32 @@ function showChoices(scene) {
         }
 
         if (choice.id === 'no-btn') {
-            setTimeout(() => {
-                btn.onmouseover = (e) => moveButton(e.target);
-                btn.onclick = (e) => moveButton(e.target);
-                btn.ontouchstart = (e) => { e.preventDefault(); moveButton(e.target); };
-            }, 500);
+            btn.onmouseover = (e) => moveButton(e.target);
+            btn.onclick = (e) => moveButton(e.target);
+            btn.ontouchstart = (e) => { e.preventDefault(); moveButton(e.target); };
         } else {
-            btn.onclick = choice.action;
+            btn.onclick = () => {
+                playClickSound();
+                choice.action();
+            };
         }
 
         choicesContainer.appendChild(btn);
     });
+
+    if (typeof enableKeyboardNav === 'function') {
+        enableKeyboardNav();
+    }
 }
 
 function moveButton(btn) {
+    playTypeSound();
+
+    noButtonMoves++;
+    if (noButtonMoves >= 4) {
+        btn.innerText = 'Why are you trying so hard?';
+    }
+
     if (btn.parentNode !== gameContainer) {
         gameContainer.appendChild(btn);
     }

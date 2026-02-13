@@ -61,7 +61,7 @@ body {
     max-width: 95vw;
 
     height: auto;
-    padding: 40px;
+    padding: 25px;
     box-sizing: border-box;
 
     background: rgba(10, 5, 20, 0.7);
@@ -83,7 +83,7 @@ body {
     text-align: center;
     z-index: 20;
 
-    transition: transform 0.3s ease, opacity 0.5s ease;
+    transition: opacity 0.5s ease;
 
     opacity: 1;
     transform: translateX(-50%) translateY(0);
@@ -137,9 +137,12 @@ body {
 
 .choice-btn:hover {
     background: rgba(255, 255, 255, 0.2);
-    border-color: #fff;
-    transform: translateY(-2px);
-    box-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
+    border-color: rgba(255, 182, 193, 0.9);
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 0 20px rgba(255, 105, 180, 0.7),
+        0 0 30px rgba(186, 85, 211, 0.5),
+        0 4px 8px rgba(0, 0, 0, 0.4);
+    color: #FFB6C1;
 }
 
 .choice-btn:active {
@@ -279,7 +282,7 @@ body {
     opacity: 0;
 }
 
-@keyframes twinkle {
+@keyframes float-up {
     0% {
         transform: translateY(0) scale(0.8);
         opacity: 0;
@@ -295,6 +298,55 @@ body {
 
     100% {
         transform: translateY(-50px) scale(1.2);
+        opacity: 0;
+    }
+}
+
+@keyframes float-diagonal {
+    0% {
+        transform: translate(0, 0) scale(0.8) rotate(0deg);
+        opacity: 0;
+    }
+
+    20% {
+        opacity: 0.6;
+    }
+
+    80% {
+        opacity: 0.6;
+    }
+
+    100% {
+        transform: translate(60px, -60px) scale(1.2) rotate(-180deg);
+        opacity: 0;
+    }
+}
+
+@keyframes float-spiral {
+    0% {
+        transform: translate(0, 0) scale(0.8) rotate(0deg);
+        opacity: 0;
+    }
+
+    20% {
+        opacity: 0.6;
+    }
+
+    40% {
+        transform: translate(20px, -15px) scale(1) rotate(90deg);
+    }
+
+    60% {
+        transform: translate(0, -35px) scale(1.1) rotate(180deg);
+    }
+
+    80% {
+        opacity: 0.6;
+        transform: translate(-20px, -45px) scale(1.2) rotate(270deg);
+    }
+
+    100% {
+        transform: translate(0, -60px) scale(1.3) rotate(360deg);
         opacity: 0;
     }
 }
@@ -537,4 +589,590 @@ body {
     display: none;
     opacity: 0;
     animation: none;
+}
+
+.cursor-blink {
+    display: inline-block;
+    width: 10px;
+    height: 1em;
+    background-color: #fff;
+    vertical-align: text-bottom;
+    margin-left: 2px;
+    font-family: Arial,
+        sans-serif !important;
+    animation: blink-cursor 1s steps(2, start) infinite;
+}
+
+@keyframes blink-cursor {
+    to {
+        visibility: hidden;
+    }
+}
+
+#controls-panel {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+    z-index: 1000;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 10px;
+    border-radius: 8px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(5px);
+}
+
+#controls-panel button {
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    color: #fff;
+    font-size: 20px;
+    width: 40px;
+    height: 40px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#controls-panel button:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 182, 193, 0.8);
+    transform: scale(1.1);
+    box-shadow: 0 0 15px rgba(255, 105, 180, 0.5);
+}
+
+#volume-slider {
+    width: 100px;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+    outline: none;
+    cursor: pointer;
+}
+
+#volume-slider::-webkit-slider-thumb {
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: #FF69B4;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(255, 105, 180, 0.7);
+}
+
+#volume-slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: #FF69B4;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(255, 105, 180, 0.7);
+    border: none;
+}
+
+#achievements-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+
+#achievements-modal.hidden {
+    display: none;
+}
+
+#achievements-content {
+    background: rgba(10, 5, 20, 0.95);
+    border: 3px solid rgba(255, 182, 193, 0.8);
+    border-radius: 12px;
+    padding: 30px;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 0 30px rgba(255, 105, 180, 0.6);
+}
+
+#achievements-content::-webkit-scrollbar {
+    display: none;
+}
+
+#achievements-content {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+#achievements-content h2 {
+    font-size: 24px;
+    color: #FFB6C1;
+    text-align: center;
+    margin-bottom: 20px;
+    text-shadow: 2px 2px 0 #000;
+}
+
+#achievements-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.achievement-item {
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    padding: 15px;
+    transition: all 0.3s ease;
+}
+
+.achievement-item.unlocked {
+    border-color: #FFB6C1;
+    background: rgba(255, 182, 193, 0.1);
+    box-shadow: 0 0 15px rgba(255, 105, 180, 0.3);
+}
+
+.achievement-item.locked {
+    opacity: 0.4;
+    filter: grayscale(100%);
+}
+
+.achievement-title {
+    font-size: 12px;
+    color: #FFB6C1;
+    margin-bottom: 8px;
+}
+
+.achievement-desc {
+    font-size: 8px;
+    color: #ccc;
+    line-height: 1.4;
+}
+
+#completion-percent {
+    text-align: center;
+    font-size: 14px;
+    color: #FF69B4;
+    margin: 20px 0;
+}
+
+#achievements-close {
+    display: block;
+    margin: 0 auto;
+    padding: 12px 30px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    color: #fff;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+#achievements-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: #FFB6C1;
+    transform: scale(1.05);
+    box-shadow: 0 0 20px rgba(255, 105, 180, 0.6);
+}
+
+#settings-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+
+#settings-modal.hidden {
+    display: none;
+}
+
+#settings-content {
+    background: rgba(10, 5, 20, 0.95);
+    border: 3px solid rgba(255, 182, 193, 0.8);
+    border-radius: 12px;
+    padding: 30px;
+    max-width: 500px;
+    width: 90%;
+    box-shadow: 0 0 30px rgba(255, 105, 180, 0.6);
+}
+
+#settings-content h2 {
+    font-size: 24px;
+    color: #FFB6C1;
+    text-align: center;
+    margin-bottom: 30px;
+    text-shadow: 2px 2px 0 #000;
+}
+
+.settings-section {
+    margin-bottom: 25px;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.settings-label {
+    display: block;
+    font-size: 12px;
+    color: #FFB6C1;
+    margin-bottom: 10px;
+    font-family: 'Press Start 2P', cursive;
+    text-shadow: 1px 1px 0 #000;
+}
+
+.volume-control {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.reset-btn {
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    color: #fff;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.reset-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: #FFB6C1;
+    transform: scale(1.05);
+    box-shadow: 0 0 10px rgba(255, 105, 180, 0.5);
+}
+
+#settings-volume-slider {
+    width: 100%;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    outline: none;
+    cursor: pointer;
+    margin-bottom: 10px;
+}
+
+#settings-volume-slider::-webkit-slider-thumb {
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    background: #FF69B4;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(255, 105, 180, 0.7);
+}
+
+#settings-volume-slider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    background: #FF69B4;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(255, 105, 180, 0.7);
+    border: none;
+}
+
+#volume-value {
+    display: block;
+    text-align: center;
+    font-size: 14px;
+    color: #fff;
+    font-family: 'Press Start 2P', cursive;
+}
+
+.settings-btn {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    color: #fff;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.settings-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: #FFB6C1;
+    transform: scale(1.02);
+    box-shadow: 0 0 15px rgba(255, 105, 180, 0.5);
+}
+
+.settings-btn.danger {
+    border-color: rgba(255, 69, 69, 0.8);
+}
+
+.settings-btn.danger:hover {
+    border-color: #FF4545;
+    box-shadow: 0 0 15px rgba(255, 69, 69, 0.5);
+}
+
+#settings-close {
+    display: block;
+    margin: 20px auto 0;
+    padding: 12px 30px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    color: #fff;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+#settings-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: #FFB6C1;
+    transform: scale(1.05);
+    box-shadow: 0 0 20px rgba(255, 105, 180, 0.6);
+}
+
+#custom-dialog {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 3000;
+}
+
+#custom-dialog.hidden {
+    display: none;
+}
+
+#dialog-content {
+    background: rgba(10, 5, 20, 0.95);
+    border: 3px solid rgba(255, 182, 193, 0.8);
+    border-radius: 12px;
+    padding: 30px;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 0 30px rgba(255, 105, 180, 0.6);
+}
+
+#dialog-message {
+    font-size: 12px;
+    color: #fff;
+    text-align: center;
+    margin-bottom: 20px;
+    font-family: 'Press Start 2P', cursive;
+    line-height: 1.6;
+}
+
+#dialog-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.dialog-btn {
+    padding: 12px 20px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    color: #fff;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 80px;
+}
+
+.dialog-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: #FFB6C1;
+    transform: scale(1.05);
+    box-shadow: 0 0 15px rgba(255, 105, 180, 0.5);
+}
+
+#loading-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: #000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 3000;
+    transition: opacity 0.5s ease;
+}
+
+#loading-screen.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+#loading-bar-container {
+    width: 400px;
+    height: 30px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+#loading-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #FF69B4, #FFB6C1);
+    width: 0%;
+    transition: width 0.3s ease;
+    box-shadow: 0 0 20px rgba(255, 105, 180, 0.8);
+}
+
+#loading-text {
+    font-size: 16px;
+    color: #FFB6C1;
+    text-shadow: 2px 2px 0 #000;
+}
+
+@media (max-width: 768px) {
+    #controls-panel {
+        bottom: 10px;
+        right: 10px;
+        padding: 8px;
+        gap: 8px;
+    }
+
+    #controls-panel button {
+        width: 36px;
+        height: 36px;
+        font-size: 18px;
+    }
+
+    #volume-slider {
+        width: 60px;
+    }
+
+    #achievements-content {
+        padding: 20px;
+        max-width: 90vw;
+    }
+
+    #loading-bar-container {
+        width: 80vw;
+    }
+
+    .choice-btn {
+        min-width: 44px;
+        min-height: 44px;
+        padding: 15px 20px;
+    }
+}
+
+.achievement-notification {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    background: rgba(10, 5, 20, 0.95);
+    border: 3px solid #FFB6C1;
+    border-radius: 12px;
+    padding: 15px 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    z-index: 5000;
+    box-shadow: 0 0 30px rgba(255, 105, 180, 0.8),
+        0 10px 40px rgba(0, 0, 0, 0.5);
+    transform: translateX(-400px);
+    opacity: 0;
+    transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.achievement-notification.show {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.achievement-notif-icon {
+    font-size: 40px;
+    animation: bounce 0.6s ease-in-out;
+}
+
+@keyframes bounce {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.2);
+    }
+}
+
+.achievement-notif-content {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.achievement-notif-title {
+    font-size: 10px;
+    color: #FFB6C1;
+    text-shadow: 1px 1px 0 #000;
+    font-family: 'Press Start 2P', cursive;
+}
+
+.achievement-notif-name {
+    font-size: 14px;
+    color: #fff;
+    text-shadow: 2px 2px 0 #000;
+    font-family: 'Press Start 2P', cursive;
+}
+
+@media (max-width: 768px) {
+    .achievement-notification {
+        top: 10px;
+        left: 10px;
+        padding: 12px 15px;
+        gap: 10px;
+    }
+
+    .achievement-notif-icon {
+        font-size: 32px;
+    }
+
+    .achievement-notif-title {
+        font-size: 8px;
+    }
+
+    .achievement-notif-name {
+        font-size: 11px;
+    }
 }
